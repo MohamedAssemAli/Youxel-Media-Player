@@ -6,7 +6,7 @@ android {
     buildToolsVersion = '33.0.1'
 
     defaultConfig {
-        applicationId "com.potyvideo.andexoplayer"
+        applicationId "com.youxrl.demoplayer"
         minSdkVersion 19
         targetSdkVersion 33
         versionCode 1
