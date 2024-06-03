@@ -6,7 +6,7 @@
 
         <variable
             name="playerControllerViewModel"
-            type="com.potyvideo.library.viewModel.PlayerControllerViewModel" />
+            type="com.youxel.library.viewModel.PlayerControllerViewModel" />
     </data>
 
     <androidx.constraintlayout.widget.ConstraintLayout
