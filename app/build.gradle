@@ -4,6 +4,7 @@ apply plugin: 'kotlin-android'
 android {
 
     buildToolsVersion = '33.0.1'
+    compileSdkVersion = 33
 
     defaultConfig {
         applicationId "com.youxrl.demoplayer"
