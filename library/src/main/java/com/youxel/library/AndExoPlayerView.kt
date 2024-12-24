@@ -268,16 +268,18 @@ class AndExoPlayerView(
 
     fun setSource(
         source: String,
+        mediaItem: MediaItem? = null,
         extraHeaders: HashMap<String, String> = hashMapOf<String, String>()
     ) {
 
         currSource = source
-
-        val mediaItem = buildMediaItem(source, extraHeaders)
-
         playerView.player = player
         player.playWhenReady = currPlayWhenReady
-        player.setMediaItem(mediaItem)
+        if (mediaItem != null) {
+            player.setMediaItem(mediaItem)
+        } else {
+            player.setMediaItem(buildMediaItem(source, extraHeaders))
+        }
         player.prepare()
     }
 
