@@ -22,7 +22,9 @@ import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.Timeline
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
 import com.youxel.library.globalEnums.EnumAspectRatio
 import com.youxel.library.globalEnums.EnumMute
@@ -281,6 +283,20 @@ class AndExoPlayerView(
             player.setMediaItem(buildMediaItem(source, extraHeaders))
         }
         player.prepare()
+    }
+
+    fun setSourceWithToken(
+        source: String,
+        token: String,
+    ) {
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setDefaultRequestProperties(mapOf("Authorization" to "Bearer $token"))
+
+        val mediaSource = ProgressiveMediaSource.Factory(httpDataSourceFactory)
+            .createMediaSource(MediaItem.fromUri(Uri.parse(source)))
+        player.setMediaSource(mediaSource)
+        player.prepare()
+        player.play()
     }
 
     fun seekBackward(backwardValue: Int = 10000) {
