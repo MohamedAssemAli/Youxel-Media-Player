@@ -22,7 +22,9 @@ import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.Timeline
+import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
+import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
@@ -288,15 +290,45 @@ class AndExoPlayerView(
     fun setSourceWithToken(
         source: String,
         token: String,
+        extraHeaders: HashMap<String, String> = hashMapOf()
     ) {
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setDefaultRequestProperties(mapOf("Authorization" to "Bearer $token"))
 
-        val mediaSource = ProgressiveMediaSource.Factory(httpDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(Uri.parse(source)))
+        val combinedHeaders = HashMap(extraHeaders)
+        combinedHeaders["Authorization"] = "Bearer $token"
+
+
+        val mediaSource = buildMediaSource(source, combinedHeaders, httpDataSourceFactory)
+
         player.setMediaSource(mediaSource)
         player.prepare()
-        player.play()
+        //player.play()
+    }
+
+    private fun buildMediaSource(
+        source: String,
+        extraHeaders: HashMap<String, String>,
+        httpDataSourceFactory: DefaultHttpDataSource.Factory
+    ): MediaSource {
+        val mediaItem = buildMediaItem(source, extraHeaders)
+
+        return when (PublicFunctions.getMimeTypeV2(source)) {
+            PublicValues.KEY_M3U8 -> {
+                // HLS Media Source
+                HlsMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
+            }
+
+            PublicValues.KEY_MP4, PublicValues.KEY_MP3 -> {
+                // Progressive Media Source
+                ProgressiveMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
+            }
+
+            else -> {
+                // Default case or additional formats
+                ProgressiveMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
+            }
+        }
     }
 
     fun seekBackward(backwardValue: Int = 10000) {
