@@ -22,7 +22,9 @@ import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.Timeline
+import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
+import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
 import com.youxel.library.globalEnums.EnumAspectRatio
 import com.youxel.library.globalEnums.EnumMute
@@ -283,6 +285,31 @@ class AndExoPlayerView(
         player.prepare()
     }
 
+    fun setSourceWithToken(
+        source: String,
+        token: String,
+    ) {
+        val mediaItem = MediaItem.Builder()
+            .setUri(source)
+            .build()
+
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setDefaultRequestProperties(mapOf("Authorization" to "Bearer $token"))
+
+        val mediaSource = ProgressiveMediaSource.Factory(
+            httpDataSourceFactory
+        ).createMediaSource(mediaItem)
+
+        player.apply {
+            setMediaSource(mediaSource)
+            player.playWhenReady = currPlayWhenReady
+            seekTo(0, 0L)
+            prepare()
+        }.also {
+            playerView.player = it
+        }
+    }
+
     fun seekBackward(backwardValue: Int = 10000) {
         var seekValue = player.currentPosition - backwardValue
         if (seekValue < 0) seekValue = 0
@@ -394,8 +421,12 @@ class AndExoPlayerView(
     fun setResizeMode(resizeMode: EnumResizeMode) {
         when (resizeMode) {
             EnumResizeMode.FIT -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-            EnumResizeMode.FILL -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
-            EnumResizeMode.ZOOM -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            EnumResizeMode.FILL -> playerView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_FILL
+
+            EnumResizeMode.ZOOM -> playerView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+
             else -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
         }
     }
@@ -424,7 +455,8 @@ class AndExoPlayerView(
             val imageView = this.findViewById<ImageView>(R.id.exo_artwork)
             playerView.useArtwork = true
             imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
-            playerView.defaultArtwork = AppCompatResources.getDrawable(context, artWorkDrawableId);
+            playerView.defaultArtwork =
+                AppCompatResources.getDrawable(context, artWorkDrawableId);
         } catch (e: Exception) {
             Log.d("artwork", "exo_artwork not found")
         }
