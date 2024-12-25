@@ -22,9 +22,7 @@ import com.google.android.exoplayer2.PlaybackParameters
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.Timeline
-import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.source.hls.HlsMediaSource
 import com.google.android.exoplayer2.ui.AspectRatioFrameLayout
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.util.MimeTypes
@@ -290,44 +288,25 @@ class AndExoPlayerView(
     fun setSourceWithToken(
         source: String,
         token: String,
-        extraHeaders: HashMap<String, String> = hashMapOf()
     ) {
+        val mediaItem = MediaItem.Builder()
+            .setUri(source)
+            .build()
+
         val httpDataSourceFactory = DefaultHttpDataSource.Factory()
             .setDefaultRequestProperties(mapOf("Authorization" to "Bearer $token"))
 
-        val combinedHeaders = HashMap(extraHeaders)
-        combinedHeaders["Authorization"] = "Bearer $token"
+        val mediaSource = ProgressiveMediaSource.Factory(
+            httpDataSourceFactory
+        ).createMediaSource(mediaItem)
 
-
-        val mediaSource = buildMediaSource(source, combinedHeaders, httpDataSourceFactory)
-
-        player.setMediaSource(mediaSource)
-        player.prepare()
-        //player.play()
-    }
-
-    private fun buildMediaSource(
-        source: String,
-        extraHeaders: HashMap<String, String>,
-        httpDataSourceFactory: DefaultHttpDataSource.Factory
-    ): MediaSource {
-        val mediaItem = buildMediaItem(source, extraHeaders)
-
-        return when (PublicFunctions.getMimeTypeV2(source)) {
-            PublicValues.KEY_M3U8 -> {
-                // HLS Media Source
-                HlsMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
-            }
-
-            PublicValues.KEY_MP4, PublicValues.KEY_MP3 -> {
-                // Progressive Media Source
-                ProgressiveMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
-            }
-
-            else -> {
-                // Default case or additional formats
-                ProgressiveMediaSource.Factory(httpDataSourceFactory).createMediaSource(mediaItem)
-            }
+        player.apply {
+            setMediaSource(mediaSource)
+            player.playWhenReady = currPlayWhenReady
+            seekTo(0, 0L)
+            prepare()
+        }.also {
+            playerView.player = it
         }
     }
 
@@ -442,8 +421,12 @@ class AndExoPlayerView(
     fun setResizeMode(resizeMode: EnumResizeMode) {
         when (resizeMode) {
             EnumResizeMode.FIT -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-            EnumResizeMode.FILL -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
-            EnumResizeMode.ZOOM -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            EnumResizeMode.FILL -> playerView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_FILL
+
+            EnumResizeMode.ZOOM -> playerView.resizeMode =
+                AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+
             else -> playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
         }
     }
@@ -472,7 +455,8 @@ class AndExoPlayerView(
             val imageView = this.findViewById<ImageView>(R.id.exo_artwork)
             playerView.useArtwork = true
             imageView.scaleType = ImageView.ScaleType.CENTER_INSIDE
-            playerView.defaultArtwork = AppCompatResources.getDrawable(context, artWorkDrawableId);
+            playerView.defaultArtwork =
+                AppCompatResources.getDrawable(context, artWorkDrawableId);
         } catch (e: Exception) {
             Log.d("artwork", "exo_artwork not found")
         }
